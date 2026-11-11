@@ -1,0 +1,103 @@
+# purpose: Remove trailing slashes from relative links produced by Quartz core.
+# quartz-version: 5.1.0
+# package: @quartz-community/utils
+# package-version: 1.2.0
+# target: node_modules/@quartz-community/utils/dist/path.js, dist/index.js, and quartz/util/path.test.ts
+# reintegrate: Patch both package entry points and update affected link test expectations; never copy an older bundle.
+--- a/node_modules/@quartz-community/utils/dist/path.js
++++ b/node_modules/@quartz-community/utils/dist/path.js
+@@ -177,7 +177,7 @@
+   return rootPath;
+ }
+ function resolveRelative(current, target) {
+-  const res = joinSegments(pathToRoot(current), simplifySlug(target));
++  const res = joinSegments(pathToRoot(current), simplifySlug(target)).replace(/\/+$/, "");
+   return res;
+ }
+ function slugHeading(text) {
+--- a/node_modules/@quartz-community/utils/dist/index.js
++++ b/node_modules/@quartz-community/utils/dist/index.js
+@@ -444,7 +444,7 @@
+   return rootPath;
+ }
+ function resolveRelative(current, target) {
+-  const res = joinSegments(pathToRoot(current), simplifySlug(target));
++  const res = joinSegments(pathToRoot(current), simplifySlug(target)).replace(/\/+$/, "");
+   return res;
+ }
+ function slugHeading(text2) {
+--- a/quartz/util/path.test.ts
++++ b/quartz/util/path.test.ts
+@@ -281,7 +281,7 @@
+       const cur = "a/b/c" as FullSlug
+       assert.strictEqual(path.transformLink(cur, "d", opts), "../../a/b/d")
+       assert.strictEqual(path.transformLink(cur, "h", opts), "../../e/g/h")
+-      assert.strictEqual(path.transformLink(cur, "a/b/index", opts), "../../a/b/")
++      assert.strictEqual(path.transformLink(cur, "a/b/index", opts), "../../a/b")
+       assert.strictEqual(path.transformLink(cur, "a/b/index.png", opts), "../../a/b/index.png")
+       assert.strictEqual(path.transformLink(cur, "a/b/index#abc", opts), "../../a/b/#abc")
+       assert.strictEqual(path.transformLink(cur, "index", opts), "../../")
+@@ -294,7 +294,7 @@
+       const cur = "a/b/index" as FullSlug
+       assert.strictEqual(path.transformLink(cur, "d", opts), "../../a/b/d")
+       assert.strictEqual(path.transformLink(cur, "h", opts), "../../e/g/h")
+-      assert.strictEqual(path.transformLink(cur, "a/b/index", opts), "../../a/b/")
++      assert.strictEqual(path.transformLink(cur, "a/b/index", opts), "../../a/b")
+       assert.strictEqual(path.transformLink(cur, "index", opts), "../../")
+     })
+ 
+@@ -302,7 +302,7 @@
+       const cur = "index" as FullSlug
+       assert.strictEqual(path.transformLink(cur, "d", opts), "./a/b/d")
+       assert.strictEqual(path.transformLink(cur, "h", opts), "./e/g/h")
+-      assert.strictEqual(path.transformLink(cur, "a/b/index", opts), "./a/b/")
++      assert.strictEqual(path.transformLink(cur, "a/b/index", opts), "./a/b")
+       assert.strictEqual(path.transformLink(cur, "index", opts), "./")
+     })
+   })
+@@ -348,7 +348,7 @@
+ 
+ describe("resolveRelative", () => {
+   test("from index", () => {
+-    assert.strictEqual(path.resolveRelative("index" as FullSlug, "index" as FullSlug), "./")
++    assert.strictEqual(path.resolveRelative("index" as FullSlug, "index" as FullSlug), ".")
+     assert.strictEqual(path.resolveRelative("index" as FullSlug, "abc" as FullSlug), "./abc")
+     assert.strictEqual(
+       path.resolveRelative("index" as FullSlug, "abc/def" as FullSlug),
+@@ -361,7 +361,7 @@
+   })
+ 
+   test("from nested page", () => {
+-    assert.strictEqual(path.resolveRelative("abc/def" as FullSlug, "index" as FullSlug), "../")
++    assert.strictEqual(path.resolveRelative("abc/def" as FullSlug, "index" as FullSlug), "..")
+     assert.strictEqual(path.resolveRelative("abc/def" as FullSlug, "abc" as FullSlug), "../abc")
+     assert.strictEqual(
+       path.resolveRelative("abc/def" as FullSlug, "abc/def" as FullSlug),
+@@ -374,21 +374,21 @@
+   })
+ 
+   test("with index paths", () => {
+-    assert.strictEqual(path.resolveRelative("abc/index" as FullSlug, "index" as FullSlug), "../")
++    assert.strictEqual(path.resolveRelative("abc/index" as FullSlug, "index" as FullSlug), "..")
+     assert.strictEqual(
+       path.resolveRelative("abc/def/index" as FullSlug, "index" as FullSlug),
+-      "../../",
++      "../..",
+     )
+-    assert.strictEqual(path.resolveRelative("index" as FullSlug, "abc/index" as FullSlug), "./abc/")
++    assert.strictEqual(path.resolveRelative("index" as FullSlug, "abc/index" as FullSlug), "./abc")
+     assert.strictEqual(
+       path.resolveRelative("abc/def" as FullSlug, "abc/index" as FullSlug),
+-      "../abc/",
++      "../abc",
+     )
+   })
+ 
+   test("with simple slugs", () => {
+-    assert.strictEqual(path.resolveRelative("abc/def" as FullSlug, "" as SimpleSlug), "../")
++    assert.strictEqual(path.resolveRelative("abc/def" as FullSlug, "" as SimpleSlug), "..")
+     assert.strictEqual(path.resolveRelative("abc/def" as FullSlug, "ghi" as SimpleSlug), "../ghi")
+-    assert.strictEqual(path.resolveRelative("abc/def" as FullSlug, "ghi/" as SimpleSlug), "../ghi/")
++    assert.strictEqual(path.resolveRelative("abc/def" as FullSlug, "ghi/" as SimpleSlug), "../ghi")
+   })
+ })

@@ -1,0 +1,75 @@
+# purpose: Limit RSS to dated pages, normalize sitemap slashes, and absolutize parent-relative feed links.
+# quartz-version: 5.1.0
+# target: quartz/plugins/builtins/contentIndex.ts and quartz/plugins/types.ts
+# reintegrate: Keep frontmatterDate out of contentIndex.json, filter RSS before limiting, and consume mixed .././ link prefixes.
+--- a/quartz/plugins/builtins/contentIndex.ts
++++ b/quartz/plugins/builtins/contentIndex.ts
+@@ -54,6 +54,7 @@
+   "richContent",
+   "date",
+   "description",
++  "frontmatterDate",
+ ])
+ 
+ interface NamedExtension {
+@@ -174,10 +175,14 @@
+       content: text ?? "",
+       richContent:
+         options.rssFullHtml && data.encrypted !== true
+-          ? escapeHTML(toHtml(tree as Root, { allowDangerousHtml: true }))
++          ? escapeHTML(toHtml(tree as Root, { allowDangerousHtml: true })).replace(
++              /href=\&quot;((?:\.\.?\/)+)/g,
++              `href=&quot;https://${ctx.cfg?.configuration?.baseUrl ?? ""}/`,
++            )
+           : undefined,
+       date: getDate(data as Parameters<typeof getDate>[0]) ?? new Date(),
+       description: (data.description as string | undefined) ?? "",
++      frontmatterDate: frontmatter.date as string | undefined,
+     }
+     index.set(slug, applyContentIndexExtensions(ctx, extensions, entry, data))
+   }
+@@ -194,7 +199,7 @@
+ function generateSiteMap(cfg: GlobalConfiguration, idx: ContentIndexMap): string {
+   const base = cfg.baseUrl ?? ""
+   const createURLEntry = (slug: SimpleSlug, content: ContentDetails): string => `<url>
+-    <loc>https://${joinSegments(base, encodeURI(slug))}</loc>
++    <loc>https://${joinSegments(base, encodeURI(slug)).replace(/\/+$/, "/")}</loc>
+     ${content.date && `<lastmod>${content.date.toISOString()}</lastmod>`}
+   </url>`
+   const urls = Array.from(idx)
+@@ -215,6 +220,7 @@
+   </item>`
+ 
+   const items = Array.from(idx)
++    .filter(([_, content]) => content.frontmatterDate)
+     .sort(([_, f1], [__, f2]) => {
+       if (f1.date && f2.date) return f2.date.getTime() - f1.date.getTime()
+       if (f1.date && !f2.date) return -1
+@@ -243,10 +249,12 @@
+ /** Entries as written to contentIndex.json (date and description are RSS/sitemap-only). */
+ export function serializeContentIndex(idx: ContentIndexMap): string {
+   const simplified = Object.fromEntries(
+-    Array.from(idx).map(([slug, { date: _date, description: _description, ...rest }]) => [
+-      slug,
+-      rest,
+-    ]),
++    Array.from(idx).map(
++      ([
++        slug,
++        { date: _date, description: _description, frontmatterDate: _frontmatterDate, ...rest },
++      ]) => [slug, rest],
++    ),
+   )
+   return JSON.stringify(simplified)
+ }
+--- a/quartz/plugins/types.ts
++++ b/quartz/plugins/types.ts
+@@ -35,6 +35,8 @@
+   date?: Date
+   /** RSS / sitemap only — not written to contentIndex.json. */
+   description?: string
++  /** RSS only — limits the feed to pages with an explicit publication date. */
++  frontmatterDate?: string
+   /** Fields added by plugins through `extendContentIndex`. */
+   [extra: string]: unknown
+ }

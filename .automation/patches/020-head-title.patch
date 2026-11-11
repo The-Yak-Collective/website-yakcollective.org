@@ -1,0 +1,18 @@
+# purpose: Omit pageTitleSuffix from HTML titles while retaining the setting for generated social-card images.
+# quartz-version: 5.1.0
+# target: quartz/components/Head.tsx
+# reintegrate: Do not replace this with an empty pageTitleSuffix because og-image reads that setting.
+--- a/quartz/components/Head.tsx
++++ b/quartz/components/Head.tsx
+@@ -12,9 +12,8 @@
+     externalResources,
+     ctx,
+   }: QuartzComponentProps) => {
+-    const titleSuffix = cfg.pageTitleSuffix ?? ""
+-    const title =
+-      (fileData.frontmatter?.title ?? i18n(cfg.locale).propertyDefaults.title) + titleSuffix
++    // Keep the suffix in social cards, but omit it from the browser tab title.
++    const title = fileData.frontmatter?.title ?? i18n(cfg.locale).propertyDefaults.title
+     const description =
+       fileData.frontmatter?.socialDescription ??
+       fileData.frontmatter?.description ??

@@ -1,0 +1,25 @@
+# purpose: Render path-based breadcrumbs when the file trie has no ancestry chain.
+# package: @quartz-community/breadcrumbs
+# package-version: 1.0.3
+# target: node_modules/@quartz-community/breadcrumbs/dist/components/index.js
+# reintegrate: Preserve pagePosition, the fallback crumb links, and a working root link for top-level pages.
+--- a/node_modules/@quartz-community/breadcrumbs/dist/components/index.js
++++ b/node_modules/@quartz-community/breadcrumbs/dist/components/index.js
+@@ -260,7 +260,16 @@
+     const slugParts = pagePosition(fileData).split("/");
+     const pathNodes = trie.ancestryChain(slugParts);
+     if (!pathNodes) {
+-      return null;
++      return /* @__PURE__ */ jsxs("nav", { class: classNames(displayClass, "breadcrumb-container"), "aria-label": "breadcrumbs", children: [
++        /* @__PURE__ */ jsxs("div", { class: "breadcrumb-element", children: [
++          /* @__PURE__ */ jsx("a", { href: slugParts.length > 1 ? "../".repeat(slugParts.length - 1) : ".", children: options.rootName }),
++          /* @__PURE__ */ jsx("p", { children: ` ${options.spacerSymbol} ` })
++        ] }),
++        slugParts.map((crumb, index) => /* @__PURE__ */ jsxs("div", { class: "breadcrumb-element", children: [
++          /* @__PURE__ */ jsx("a", { href: "../".repeat(slugParts.length - 1) + slugParts.slice(0, index + 1).join("/"), children: crumb }),
++          index !== slugParts.length - 1 && /* @__PURE__ */ jsx("p", { children: ` ${options.spacerSymbol} ` })
++        ] }))
++      ] });
+     }
+     const crumbs = pathNodes.map((node, idx) => {
+       const crumb = formatCrumb(node.displayName, slug, simplifySlug(node.slug));

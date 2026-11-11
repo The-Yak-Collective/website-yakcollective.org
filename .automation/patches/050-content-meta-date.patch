@@ -1,0 +1,21 @@
+# purpose: Render long UTC dates in the visible page metadata component.
+# package: @quartz-community/content-meta
+# package-version: 1.0.2
+# target: node_modules/@quartz-community/content-meta/dist/components/index.js
+# reintegrate: Quartz loads the components entry point; patching core Date, utils, or the package root is insufficient.
+--- a/node_modules/@quartz-community/content-meta/dist/components/index.js
++++ b/node_modules/@quartz-community/content-meta/dist/components/index.js
+@@ -483,9 +483,11 @@
+ // node_modules/@quartz-community/utils/dist/date.js
+ function formatDate(d, locale = "en-US") {
+   return d.toLocaleDateString(locale, {
++    weekday: "long",
+     year: "numeric",
+-    month: "short",
+-    day: "2-digit"
++    month: "long",
++    day: "numeric",
++    timeZone: "UTC"
+   });
+ }
+ 

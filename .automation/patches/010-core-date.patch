@@ -1,0 +1,20 @@
+# purpose: Render long dates in UTC in Quartz's core Date component.
+# quartz-version: 5.1.0
+# target: quartz/components/Date.tsx
+# reintegrate: Preserve weekday, full month, numeric day, and UTC. Keep 050-content-meta-date.patch in sync.
+--- a/quartz/components/Date.tsx
++++ b/quartz/components/Date.tsx
+@@ -19,9 +19,11 @@
+ 
+ export function formatDate(d: Date, locale: ValidLocale = "en-US"): string {
+   return d.toLocaleDateString(locale, {
++    weekday: "long",
+     year: "numeric",
+-    month: "short",
+-    day: "2-digit",
++    month: "long",
++    day: "numeric",
++    timeZone: "UTC",
+   })
+ }
+ 

@@ -1,0 +1,17 @@
+# purpose: Keep the parent repository's ignore rule for .automation/build from hiding vault content.
+# quartz-version: 5.1.0
+# target: quartz/util/glob.ts
+# reintegrate: The build copies content and applies explicit ignorePatterns; parent Git ignore files must stay disabled.
+--- a/quartz/util/glob.ts
++++ b/quartz/util/glob.ts
+@@ -15,7 +15,9 @@
+     await globby(pattern, {
+       cwd,
+       ignore: ignorePatterns,
+-      gitignore: true,
++      // The website builds inside its own ignored .automation/build directory.
++      // Parent .gitignore files must not hide the copied vault from Quartz.
++      gitignore: false,
+     })
+   ).map(toPosixPath)
+   return fps as FilePath[]

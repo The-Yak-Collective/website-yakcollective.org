@@ -124,7 +124,7 @@ hr {
 	display: none;
 }
 
-.search #search-container #search-space #search-layout .highlight {
+.search>.search-container>.search-space>.search-layout .highlight {
 	background-color: var(--textHighlight);
 }
 
@@ -136,7 +136,7 @@ hr {
 	font-weight: bold;
 }
 
-.page-header .breadcrumb-container .breadcumb-element {
+.page-header .breadcrumb-container .breadcrumb-element {
 	height: 2rem;
 }
 
@@ -505,6 +505,6 @@ body[data-slug="yakcon-2023"] .page-header .content-meta {
 	display: none;
 }
 
-body[data-slug="projects/astonishing-stories/index"] .page-header .content-meta {
+body[data-slug="projects/astonishing-stories"] .page-header .content-meta {
 	display: block;
 }

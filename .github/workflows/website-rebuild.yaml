@@ -4,20 +4,31 @@ on:
   push:
     branches:
       - production
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          submodules: 'recursive'
-      - uses: actions/setup-node@v7
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 24
-      - run: |
-          ./.automation/build.sh
-      - uses: netlify/actions/cli@master
+          cache: npm
+          cache-dependency-path: .automation/quartz/package-lock.json
+      - run: ./.automation/build.sh build
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+        uses: netlify/actions/cli@3185065f4ab2f6df6f2ef41ee013626e1c02a426 # master
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE }}

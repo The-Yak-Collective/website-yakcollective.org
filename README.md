@@ -12,13 +12,28 @@ This `README` and files in the `private` directory are *not* included in the fin
 
 ## Building the Website Locally
 ```bash
-# Build the website
+# Update Quartz to a particular release (tag); currently at v5.1.0
 #
-./.automation/build.sh
+./.automation/build.sh update v5.1.0
 
-# Optionally view the website locally via http://127.0.0.1:8080
+# Check patches for drift (useful for development; performed
+# automatically as part of the `update` command above)
+#
+./.automation/build.sh check
+
+# Clean the build environment (useful for development, not needed with
+# a fresh checkout)
+#
+./.automation/build.sh clean
+
+# Run a local copy of the website at http://127.0.0.1:8080 (useful for
+# development)
 #
 ./.automation/build.sh serve
+
+# Build the website (this is the only command that *needs* to be run)
+#
+./.automation/build.sh build
 
 # Push the website to Netlify.
 #
