@@ -47,7 +47,7 @@ const rssItems = rss.match(/<item>/g)?.length ?? 0
 check(rssItems === datedFiles.length, `RSS has ${rssItems} items; expected ${datedFiles.length} dated pages`)
 check(!rss.includes("<title>Welcome!</title>"), "RSS excludes undated pages")
 check(!rss.includes("https://www.yakcollective.org/./"), "RSS links contain no /./ segments")
-check(!/(?:href|src)=&quot;\.\.?\//.test(rss), "RSS links and images use absolute URLs")
+check(!/(?:href|src)=&quot;(?:\.\.?\/|\/(?!\/))/.test(rss), "RSS links and images use absolute URLs")
 
 for (const file of datedFiles) {
 	const dateMatch = frontmatter(file).match(/^\s*date:\s*["']?(\d{4}-\d{2}-\d{2})["']?\s*$/m)
@@ -68,7 +68,12 @@ check(
 )
 check(sitemapUrls.every((url) => !url.includes("/./")), "sitemap URLs contain no /./ segments")
 
-const contentIndex = JSON.parse(fs.readFileSync(path.join(wwwDir, "static/contentIndex.json"), "utf8"))
+const contentIndexText = fs.readFileSync(path.join(wwwDir, "static/contentIndex.json"), "utf8")
+const contentIndex = JSON.parse(contentIndexText)
+check(
+	!/(?:href|src)=&quot;(?:\.\.?\/|\/(?!\/))/.test(contentIndexText),
+	"content index links and images use absolute URLs",
+)
 check(
 	!Object.values(contentIndex).some((entry) => Object.hasOwn(entry, "frontmatterDate")),
 	"frontmatterDate is internal to RSS generation",
@@ -79,6 +84,35 @@ for (const file of htmlFiles) {
 	const html = fs.readFileSync(file, "utf8")
 	const title = html.match(/<title>([^<]*)<\/title>/)
 	check(title && !title[1].includes(" :: The Yak Collective"), `${path.relative(wwwDir, file)} has no browser title suffix`)
+	for (const match of html.matchAll(/(?<![\w:-])(href|src)="([^"]*)"/g)) {
+		const value = match[2]
+		if (value === "") continue
+		const isFragment = value.startsWith("#")
+		const isProtocolRelative = value.startsWith("//")
+		const hasScheme = /^[A-Za-z][A-Za-z0-9+.-]*:/.test(value)
+		const isRootRelative = value.startsWith("/") && !isProtocolRelative
+		check(
+			isFragment || isProtocolRelative || hasScheme || isRootRelative,
+			`${path.relative(wwwDir, file)} has a request-dependent URL: ${value}`,
+		)
+		if (!isRootRelative) continue
+
+		const resolved = new URL(value, "https://site.invalid")
+		check(
+			resolved.pathname === "/" || !resolved.pathname.endsWith("/"),
+			`${path.relative(wwwDir, file)} has a trailing-slash internal URL: ${value}`,
+		)
+		const decodedPath = decodeURIComponent(resolved.pathname)
+		const target = path.join(wwwDir, decodedPath.replace(/^\/+/, ""))
+		const candidates =
+			decodedPath === "/"
+				? [path.join(wwwDir, "index.html")]
+				: [target, `${target}.html`, path.join(target, "index.html")]
+		check(
+			candidates.some((candidate) => fs.existsSync(candidate) && fs.statSync(candidate).isFile()),
+			`${path.relative(wwwDir, file)} links to a missing local target: ${value}`,
+		)
+	}
 	for (const match of html.matchAll(/<time\s+datetime="([^"]+)"[^>]*>([^<]+)<\/time>/g)) {
 		timeCount += 1
 		const expected = new Date(match[1]).toLocaleDateString("en-US", {

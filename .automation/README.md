@@ -1,6 +1,6 @@
 # Website automation
 
-Run `./.automation/build.sh` from the repository root to build the site in `.automation/www`. The build uses a fresh copy of the Quartz submodule. It installs dependencies with `npm ci`, applies the site overlay and patches, checks the plugin configuration, and runs output smoke tests. Run `./.automation/build.sh clean` to remove `.automation/build` and `.automation/www`.
+Run `./.automation/build.sh` from the repository root to build the site in `.automation/www`. The build uses a fresh copy of the Quartz submodule. It installs dependencies with `npm ci`, applies the site overlay and patches, and checks the plugin configuration. It also makes HTML URLs root-relative so pages work with or without a trailing slash in the request URL. Output smoke tests check these URLs and the site customizations. Run `./.automation/build.sh clean` to remove `.automation/build` and `.automation/www`.
 
 Run `./.automation/build.sh check` to test the customizations without changing the existing build. The command checks patch context and the Quartz or package version in each patch header. A `DRIFT` result means that a patch does not apply. A `REVIEW` result means that the patch applies but its version metadata needs review. Both results block a build until someone resolves them.
 

@@ -248,7 +248,8 @@ build_site() {
 			npx --no-install quartz build --output ../www
 		fi
 	)
-	sed -i'' -e 's#href=\&quot;[\./]\+/#href=\&quot;https://www.yakcollective.org/#g;s#src=\&quot;[\./]\+/#src=\&quot;https://www.yakcollective.org/#g;' "$WWW_DIR/index.xml"
+	node --test "$SCRIPT_DIR/postprocess.test.mjs"
+	node "$SCRIPT_DIR/postprocess.mjs" "$WWW_DIR"
 	node "$SCRIPT_DIR/smoke-test.mjs" "$BUILD_DIR" "$WWW_DIR"
 }
 
